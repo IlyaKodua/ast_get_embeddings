@@ -8,6 +8,7 @@ import pickle
 import os
 import time
 
+batch_size = 128
 
 
 def wav2fbank(filename, filename2=None):
@@ -71,6 +72,17 @@ def get_tensor(filename):
     return fbank[None,:,:]
 
 
+def to_batch(files, n = 64):
+    new_array = []
+    id_start = 0
+    id_end = n
+    while id_end < len(files):
+        new_array.append(files[id_start:id_end])
+        id_start += n
+        id_end += n
+    new_array.append(files[id_start:len(files)])
+
+    return new_array
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -84,6 +96,7 @@ os.mkdir(dir_out)
 
 list_files = glob.glob(data_dir + '**/*.wav', recursive=True)
 
+list_files = to_batch(list_files, batch_size)
 persent = 0
 timer = time.time()
 print("Start!!!")
@@ -97,18 +110,21 @@ for i, filename in enumerate(list_files):
         print(time.time() - timer, " s")
         timer = time.time()
     
-    fbank = get_tensor(filename)
+    fbank = torch.zeros(batch_size,  998, 128)
+    for i in range(batch_size):
+        fbank[i,:,:] = get_tensor(filename[i])
     
     with torch.no_grad():
-        embedding = ast_mdl(fbank)
+        embeddings_batch = ast_mdl(fbank)
     
-    embedding = embedding[0].detach().cpu().numpy()
-    file_name_split = filename.split("/")
-    
-    wav_name = file_name_split[-1]
-    name = file_name_split[-1].split(".")[0]
-    with open(dir_out + "/" +file_name_split[-3] +"_" +file_name_split[-2] +"_"+ name +".pkl", 'wb') as f:
-        pickle.dump(embedding, f)
+    for i in range(batch_size):
+        embedding = embeddings_batch[i].detach().cpu().numpy()
+        file_name_split = filename[i].split("/")
+        
+        wav_name = file_name_split[-1]
+        name = file_name_split[-1].split(".")[0]
+        with open(dir_out + "/" +file_name_split[-3] +"_" +file_name_split[-2] +"_"+ name +".pkl", 'wb') as f:
+            pickle.dump(embedding, f)
 
 
 
