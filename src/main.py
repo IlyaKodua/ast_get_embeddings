@@ -8,7 +8,7 @@ import pickle
 import os
 import time
 
-batch_size = 128
+batch_size = 32
 
 
 def wav2fbank(filename, filename2=None):
@@ -89,7 +89,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ast_mdl = ASTModel(label_dim=7, input_tdim=998, imagenet_pretrain=True, audioset_pretrain=True)
 ast_mdl = ast_mdl.to(device)
 
-data_dir = "/home/liya/research/dcase_2022/dcase_2022_data/"
+data_dir = "/home/liya/datasets/dcase_2022_data/"
 dir_out = "out"
 
 os.mkdir(dir_out)
@@ -110,12 +110,12 @@ for i, filename in enumerate(list_files):
         print(time.time() - timer, " s")
         timer = time.time()
     
-    fbank = torch.zeros(batch_size,  998, 128)
-    for i in range(batch_size):
+    fbank = torch.zeros(len(list_files[i]),  998, 128)
+    for i in range(len(list_files[i])):
         fbank[i,:,:] = get_tensor(filename[i])
     
     with torch.no_grad():
-        embeddings_batch = ast_mdl(fbank)
+        embeddings_batch = ast_mdl(fbank.to(device))
     
     for i in range(batch_size):
         embedding = embeddings_batch[i].detach().cpu().numpy()
