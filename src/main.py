@@ -101,8 +101,7 @@ persent = 0
 timer = time.time()
 print("Start!!!")
 ast_mdl.eval()
-data = list_files[len(list_files) - 64:len(list_files)]
-for i, filename in enumerate(data):
+for i, filename in enumerate(list_files):
     cycl_perent = int((i+1)/len(list_files)*100)
     
     if(cycl_perent != persent):
@@ -111,20 +110,19 @@ for i, filename in enumerate(data):
         print(time.time() - timer, " s")
         timer = time.time()
     
-    fbank = torch.zeros(len(data[i]),  998, 128)
-    for k in range(len(data[i])):
+    fbank = torch.zeros(len(list_files[i]),  998, 128)
+    for k in range(len(list_files[i])):
         fbank[k,:,:] = get_tensor(filename[k])
     
     with torch.no_grad():
         embeddings_batch = ast_mdl(fbank.to(device))
     
-    for k in range(len(data[i])):
+    for k in range(len(list_files[i])):
         embedding = embeddings_batch[k].detach().cpu().numpy()
         file_name_split = filename[k].split("/")
-        
         wav_name = file_name_split[-1]
         name = file_name_split[-1].split(".")[0]
-        with open(dir_out + "/" +file_name_split[-3] +"_" +file_name_split[-2] +"_"+ name +".pkl", 'wb') as f:
+        with open(dir_out + "/" + file_name_split[-4] + "$" + file_name_split[-3] + "$" + file_name_split[-2] + "$" + name + ".pkl", 'wb') as f:
             pickle.dump(embedding, f)
 
 
