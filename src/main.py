@@ -101,7 +101,8 @@ persent = 0
 timer = time.time()
 print("Start!!!")
 ast_mdl.eval()
-for i, filename in enumerate(list_files):
+data = list_files[len(list_files) - 64:len(list_files)]
+for i, filename in enumerate(data):
     cycl_perent = int((i+1)/len(list_files)*100)
     
     if(cycl_perent != persent):
@@ -110,16 +111,16 @@ for i, filename in enumerate(list_files):
         print(time.time() - timer, " s")
         timer = time.time()
     
-    fbank = torch.zeros(len(list_files[i]),  998, 128)
-    for i in range(len(list_files[i])):
-        fbank[i,:,:] = get_tensor(filename[i])
+    fbank = torch.zeros(len(data[i]),  998, 128)
+    for k in range(len(data[i])):
+        fbank[k,:,:] = get_tensor(filename[k])
     
     with torch.no_grad():
         embeddings_batch = ast_mdl(fbank.to(device))
     
-    for i in range(batch_size):
-        embedding = embeddings_batch[i].detach().cpu().numpy()
-        file_name_split = filename[i].split("/")
+    for k in range(len(data[i])):
+        embedding = embeddings_batch[k].detach().cpu().numpy()
+        file_name_split = filename[k].split("/")
         
         wav_name = file_name_split[-1]
         name = file_name_split[-1].split(".")[0]
